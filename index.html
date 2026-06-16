@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KG ↔ Mann Pro Converter</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#6d28d9">
+
+<style>
+body{
+margin:0;
+font-family:Arial;
+background:linear-gradient(135deg,#6d28d9,#06b6d4);
+display:flex;
+justify-content:center;
+align-items:center;
+min-height:100vh;
+transition:0.3s;
+}
+
+.dark{
+background:linear-gradient(135deg,#0f172a,#000);
+color:white;
+}
+
+.card{
+width:92%;
+max-width:450px;
+background:white;
+padding:20px;
+border-radius:20px;
+box-shadow:0 10px 30px rgba(0,0,0,0.3);
+text-align:center;
+}
+
+.dark .card{background:#1e293b;color:white}
+
+input,textarea,select{
+width:100%;
+padding:10px;
+margin:6px 0;
+border-radius:10px;
+border:1px solid #ccc;
+font-size:16px;
+}
+
+button{
+padding:10px;
+margin:4px;
+border:none;
+border-radius:10px;
+cursor:pointer;
+font-weight:bold;
+}
+
+.btn1{background:#6d28d9;color:white}
+.btn2{background:red;color:white}
+.btn3{background:black;color:white}
+.btn4{background:green;color:white}
+.btn5{background:#f59e0b;color:white}
+
+#result{
+margin-top:10px;
+font-size:20px;
+font-weight:bold;
+}
+
+#history{
+text-align:left;
+max-height:150px;
+overflow:auto;
+margin-top:10px;
+font-size:14px;
+}
+
+.item{
+display:flex;
+justify-content:space-between;
+background:#f1f1f1;
+padding:5px;
+margin:3px 0;
+border-radius:6px;
+}
+
+.dark .item{background:#334155}
+
+#ad{
+position:fixed;
+bottom:0;
+left:0;
+width:100%;
+background:#111;
+color:white;
+padding:8px;
+text-align:center;
+font-size:13px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+
+<h2>KG ↔ Mann Pro Converter</h2>
+
+<input id="input" placeholder="Enter: 20 + 30 + 10 or 60">
+
+<select id="mode">
+<option value="kg">KG → Mann</option>
+<option value="mann">Mann → KG</option>
+</select>
+
+<button class="btn1" onclick="convert()">Convert</button>
+<button class="btn2" onclick="clearAll()">Clear</button>
+<button class="btn3" onclick="toggleDark()">Dark</button>
+<button class="btn5" onclick="copyResult()">Copy</button>
+
+<br>
+
+<button id="installBtn" class="btn4" style="display:none">Install App</button>
+
+<div id="result"></div>
+
+<h3>History</h3>
+<div id="history"></div>
+
+</div>
+
+<div id="ad">Advertisement Space</div>
+
+<script>
+
+let deferredPrompt;
+
+// INSTALL BUTTON
+window.addEventListener("beforeinstallprompt",(e)=>{
+e.preventDefault();
+deferredPrompt=e;
+document.getElementById("installBtn").style.display="inline-block";
+});
+
+document.getElementById("installBtn").onclick=()=>{
+deferredPrompt.prompt();
+};
+
+// MAIN CONVERT
+function convert(){
+
+let input=document.getElementById("input").value;
+let mode=document.getElementById("mode").value;
+
+if(!input) return;
+
+// handle + system
+let value = eval(input.replace(/[^0-9+]/g,'')) || parseFloat(input);
+
+let result="";
+
+if(mode==="kg"){
+
+let mann=Math.floor(value/40);
+let kg=value%40;
+
+if(mann>0 && kg>0){
+result=mann+" Mann "+kg+" KG";
+}
+else if(mann>0){
+result=mann+" Mann";
+}
+else{
+result=kg+" KG";
+}
+
+}else{
+result=(value*40)+" KG";
+}
+
+document.getElementById("result").innerText=result;
+
+// history
+let h=JSON.parse(localStorage.getItem("h"))||[];
+h.unshift(input+" → "+result);
+localStorage.setItem("h",JSON.stringify(h));
+
+loadHistory();
+}
+
+// HISTORY
+function loadHistory(){
+let h=JSON.parse(localStorage.getItem("h"))||[];
+
+document.getElementById("history").innerHTML=
+h.map((x,i)=>
+`<div class="item">${x} <button onclick="del(${i})">❌</button></div>`
+).join("");
+}
+
+function del(i){
+let h=JSON.parse(localStorage.getItem("h"))||[];
+h.splice(i,1);
+localStorage.setItem("h",JSON.stringify(h));
+loadHistory();
+}
+
+// CLEAR
+function clearAll(){
+localStorage.removeItem("h");
+document.getElementById("history").innerHTML="";
+document.getElementById("result").innerHTML="";
+}
+
+// DARK MODE
+function toggleDark(){
+document.body.classList.toggle("dark");
+}
+
+// COPY
+function copyResult(){
+navigator.clipboard.writeText(document.getElementById("result").innerText);
+alert("Copied!");
+}
+
+loadHistory();
+
+// PWA
+if("serviceWorker" in navigator){
+navigator.serviceWorker.register("service-worker.js");
+}
+
+</script>
+
+</body>
+</html>
